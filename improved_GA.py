@@ -8,21 +8,21 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib as mpl
 
-mpl.rcParams['font.sans-serif'] = ['KaiTi', 'SimHei', 'FangSong']  # 汉字字体,优先使用楷体，如果找不到楷体，则使用黑体
-mpl.rcParams['font.size'] = 12  # 字体大小
-mpl.rcParams['axes.unicode_minus'] = False  # 正常显示负号
+# mpl.rcParams['font.sans-serif'] = ['KaiTi', 'SimHei', 'FangSong']
+# mpl.rcParams['font.size'] = 12
+# mpl.rcParams['axes.unicode_minus'] = False
 
 # INF无穷大
 INF = 100000
 
 
 class K_M:
-    def __init__(self,express_site_num,car_num, start_site,express_sites,cars_driving_distance):
-        self.car_num=car_num    #the number of DDV
-        self.start_site=start_site  #The serial number of SC
-        self.express_site_num=express_site_num  #the number of ES
-        self.express_sites=express_sites    #Location of ESs
-        self.cars_driving_distance=cars_driving_distance    #The distance vector that DDV can travel
+    def __init__(self,express_station_num,car_num, start_station,express_stations,cars_driving_distance):
+        self.car_num=car_num    #the number of EDV
+        self.start_station=start_station  #The serial number of SC
+        self.express_station_num=express_station_num  #the number of ES
+        self.express_stations=express_stations    #Location of ESs
+        self.cars_driving_distance=cars_driving_distance    #The distance vector that EDV can travel
 
     def cal_dis(self,data, clu, k): #Calculate the distance between the centroid and the data point
         dis = []
@@ -43,7 +43,6 @@ class K_M:
     def cal_cen(self,data, clusterRes, k):#calculate centroid
         clunew = []
         for i in range(k):
-            # 计算每个组的新质心
             idx = np.where(clusterRes == i)
             sum = data[idx].sum(axis=0)
             avg_sum = sum / len(data[idx])
@@ -68,9 +67,9 @@ class K_M:
 
 
     def get_k_clu(self):
-        k = self.car_num  # 类别个数
-        data_copy = np.array(self.express_sites)
-        data = data_copy[0:self.express_site_num - 1, 1:3]  # 删除最后一行并且删除第一列
+        k = self.car_num
+        data_copy = np.array(self.express_stations)
+        data = data_copy[0:self.express_station_num - 1, 1:3]  # 删除最后一行并且删除第一列
         d=[0 for i in range(len(data))]
         clu=[]
         clu.append(random.choice(data[:, 0:2].tolist()))
@@ -91,8 +90,8 @@ class K_M:
     def k_means_starts(self):
         #print("进入K-Means++算法阶段")
         k = self.car_num  # 类别个数
-        data_copy =np.array(self.express_sites)
-        data=data_copy[0:self.express_site_num-1,1:3] #删除最后一行并且删除第一列
+        data_copy =np.array(self.express_stations)
+        data=data_copy[0:self.express_station_num-1,1:3] #删除最后一行并且删除第一列
 
         clu = self.get_k_clu()  # k-means++取质心
         clu = np.asarray(clu)
@@ -156,7 +155,7 @@ class K_M:
 
 
 
-        f=[x for x in range(self.express_site_num + 1,self.express_site_num + self.car_num)] #间断点
+        f=[x for x in range(self.express_station_num + 1,self.express_station_num + self.car_num)] #间断点
         for i in range(self.car_num-1):
             chrom.insert(new_cumulate_count[i], f[i]) #在类别间断点处添加间断点
         chrom_new = list(map(int, chrom)) #将染色体转化为列表后返回
@@ -166,26 +165,26 @@ class K_M:
 
 
 class GA:
-    def __init__(self, car_num, express_site_num, start_site,max_iteration_num1,
+    def __init__(self, car_num, express_station_num, start_station,max_iteration_num1,
                  max_iteration_num2,distance_weight,diff_weight,time_weight):
         self.population_size = 30
         self.population = []  # population
-        self.car_num = car_num  # the number of DDV
-        self.express_site_num = express_site_num  # the number of ES
-        self.chrom_len = car_num + express_site_num - 2  # Chromosome length=(ES-1) + (DDV-1)
-        self.start_site = start_site  # SC
+        self.car_num = car_num  # the number of EDV
+        self.express_station_num = express_station_num  # the number of ES
+        self.chrom_len = car_num + express_station_num - 2  # Chromosome length=(ES-1) + (EDV-1)
+        self.start_station = start_station  # SC
         self.max_iteration_num1 = max_iteration_num1  # stage 1
         self.max_iteration_num2 = max_iteration_num2 # stage 2
         self.iteration_count = 1
-        self.break_points = [x for x in range(self.express_site_num + 1,self.express_site_num + self.car_num)]  # discontinuities
-        self.express_sites = []  # location [ [1, 116.407526, 39.904033],[],...,[]]
-        self.disMatrix = np.zeros([express_site_num,express_site_num])  # (distance Matrix)
-        self.conMatrix=np.zeros([express_site_num,express_site_num])  # (congestion Matrix)
+        self.break_points = [x for x in range(self.express_station_num + 1,self.express_station_num + self.car_num)]  # discontinuities
+        self.express_stations = []  # location [ [1, 116.407526, 39.904033],[],...,[]]
+        self.disMatrix = np.zeros([express_station_num,express_station_num])  # (distance Matrix)
+        self.conMatrix=np.zeros([express_station_num,express_station_num])  # (congestion Matrix)
         self.per_gen_best_chrom = []  # The optimal individual for each generation
         self.per_gen_best_chrom_fit = 0  # Fitness of the optimal individual per generation
         self.per_gen_best_path = []  # The path of the optimal individual in each generation
         self.per_gen_best_dis_sum = INF  # The total distance of the optimal individuals in each generation
-        self.per_gen_passing_sites=[]  #The number of express stations of all express vehicle routes in each generation of optimal individuals
+        self.per_gen_passing_stations=[]  #The number of express stations of all express vehicle routes in each generation of optimal individuals
         self.per_gen_best_dist_list=[] #List of optimal route length for each generation (record the distance traveled for each route)
         self.all_per_gen_best_chrom = []  # Record the optimal individual change of each generation in each iteration process
         self.all_per_gen_best_chrom_fit = []  # The fitness changes of the optimal individuals in each generation were recorded during each iteration
@@ -194,7 +193,7 @@ class GA:
         self.best_chrom_fit = 0  # Fitness of globally optimal individuals
         self.best_path = []  # Path of globally optimal individual
         self.best_dis_sum = INF  # Sum of paths of globally optimal individuals
-        self.best_passing_sites=[] #The number of express stations of all express vehicle paths in the global optimal individual
+        self.best_passing_stations=[] #The number of express stations of all express vehicle paths in the global optimal individual
         self.best_dist_list=[] #Global Optimal solution Route Length list (record the distance traveled for each route)
         self.all_best_chrom = []  # Record the change of the global optimal individual during each iteration
         self.all_best_chrom_fit = []  # The fitness changes of the global optimal individual during each iteration were recorded
@@ -225,19 +224,19 @@ class GA:
 
         self.start_index=0
 
-    def get_sites(self):
-        express_sites = []
-        sites_data_1000 = pd.read_csv('./data/express_site5.csv').values
-        m = sites_data_1000[:, 0:1]
+    def get_stations(self):
+        express_stations = []
+        stations_data_1000 = pd.read_csv('./data/express_station5.csv').values
+        m = stations_data_1000[:, 0:1]
         m = [j for i in m for j in i]
-        x = sites_data_1000[:, 1:2]
+        x = stations_data_1000[:, 1:2]
         x = [j for i in x for j in i]
-        y = sites_data_1000[:, 2:3]
+        y = stations_data_1000[:, 2:3]
         y = [j for i in y for j in i]
         for i in range(len(x)):
-            express_sites.append([m[i], x[i], y[i]])
-        print(express_sites)
-        return express_sites
+            express_stations.append([m[i], x[i], y[i]])
+        print(express_stations)
+        return express_stations
 
     def get_driving_distance(self):
         cars_driving_distance = []
@@ -266,19 +265,19 @@ class GA:
         #print(my_matrix)
         return my_matrix
 
-    def express_sites_init_pop(self):
-        # 读取中国快递站点文件，并初始化express_sites
-        self.express_sites = self.get_sites()
+    def express_stations_init_pop(self):
+        # 读取中国快递站点文件，并初始化express_stations
+        self.express_stations = self.get_stations()
         # 获得各快递站点间的距离矩阵
-        self.disMatrix = self.DMAT(self.express_sites)
-        # print(self.DMAT(self.express_sites))
+        self.disMatrix = self.DMAT(self.express_stations)
+        # print(self.DMAT(self.express_stations))
         # 读取各快递车行能行驶的距离
         self.cars_driving_distance = self.get_driving_distance()
         #print(self.cars_driving_distance)
         #读取各快递点间道路的拥堵情况 数值范围：1~2   1表示无拥堵，2表示拥堵情况很严重  （1-2）之间根据值大小表示拥堵情况的大小
         self.conMatrix=self.get_congestion_situation()
 
-        k_means=K_M(self.express_site_num,self.car_num,self.start_site,self.express_sites,self.cars_driving_distance)
+        k_means=K_M(self.express_station_num,self.car_num,self.start_station,self.express_stations,self.cars_driving_distance)
 
         print("Enter the k-means ++ algorithm stage")
         for i in range(self.population_size):  # population_size为种群的大小：即有多少条路径
@@ -421,14 +420,14 @@ class GA:
         # 将增加的切断点还原成起始点
         for i in range(len(parent_chrom)):
             if parent_chrom[i] in self.break_points:
-                tmp_chrom[i] = self.start_site
+                tmp_chrom[i] = self.start_station
         index1 = random.randint(self.start_index , chrom_length-1)
         child_chrom = parent_chrom[:]
         mindistance = INF
         minindex=index1+1
         index2=index1+1
 
-        while(index2!=chrom_length and tmp_chrom[index2]!=self.start_site):
+        while(index2!=chrom_length and tmp_chrom[index2]!=self.start_station):
             if (self.disMatrix[tmp_chrom[index1] - 1][tmp_chrom[index2] - 1] < mindistance):
                 minindex = index2
                 mindistance = self.disMatrix[tmp_chrom[index1] - 1][tmp_chrom[index2] - 1]
@@ -453,7 +452,7 @@ class GA:
         # 将增加的切断点还原成起始点
         for i in range(len(parent_chrom)):
             if parent_chrom[i] in self.break_points:
-                tmp_chrom[i] = self.start_site
+                tmp_chrom[i] = self.start_station
 
         index1 = random.randint(self.start_index, chrom_length - 1)
         child_chrom = parent_chrom[:]
@@ -461,7 +460,7 @@ class GA:
         index2 = random.randint(index1, chrom_length - 1)
         minindex = index2
 
-        while (index2 != chrom_length and tmp_chrom[index2] != self.start_site):
+        while (index2 != chrom_length and tmp_chrom[index2] != self.start_station):
             if (self.disMatrix[tmp_chrom[index1] - 1][tmp_chrom[index2] - 1] < mindistance):
                 minindex = index2
                 mindistance = self.disMatrix[tmp_chrom[index1] - 1][tmp_chrom[index2] - 1]
@@ -510,21 +509,21 @@ class GA:
         # 将增加的切断点还原成起始点
         for i in range(len(chrom)):
             if chrom[i] in self.break_points:
-                tmp_chrom[i] = self.start_site
+                tmp_chrom[i] = self.start_station
         # 根据起始点把chrom分成多段
         one_routine = []  # 一个快递车路线，可以为空
         all_routines = []  # 所有快递车路线
-        passing_sites_count = []
+        passing_stations_count = []
         for v in tmp_chrom:
-            if v == self.start_site:
+            if v == self.start_station:
                 all_routines.append(one_routine)
-                passing_sites_count.append(len(one_routine))
+                passing_stations_count.append(len(one_routine))
                 one_routine = []
-            elif v != self.start_site:
+            elif v != self.start_station:
                 one_routine.append(v)
         # 还有一次需要添加路线
         all_routines.append(one_routine)
-        passing_sites_count.append(len(one_routine))
+        passing_stations_count.append(len(one_routine))
         routines_dis = []  # 所有路径总距离组成的列表
         # 计算每一条路总的距离
         for r in all_routines:
@@ -540,16 +539,16 @@ class GA:
                 for i in range(r_len):
                     # 别忘了最后加上起始点到第一个点的距离
                     if i == 0:
-                        distance += self.disMatrix[self.start_site - 1, r[i] - 1]
+                        distance += self.disMatrix[self.start_station - 1, r[i] - 1]
                     if i + 1 < r_len:
                         #print("%d %d %f" %(r[i] ,r[i+1], self.disMatrix[r[i] - 1, r[i + 1] - 1] ))
                         distance += self.disMatrix[r[i] - 1, r[i + 1] - 1]
                     # 最后一个顶点，下一站是起始点
                     elif i == r_len - 1:
-                        distance += self.disMatrix[r[i] - 1, self.start_site - 1]
+                        distance += self.disMatrix[r[i] - 1, self.start_station - 1]
                 routines_dis.append(distance)
         #print(routines_dis)
-        return all_routines, routines_dis, passing_sites_count
+        return all_routines, routines_dis, passing_stations_count
 
     def get_cars_distance_and_time(self, chrom):  #新增方法
         length=len(chrom) #这是途径快递站点的数目
@@ -559,18 +558,18 @@ class GA:
             for i in range(length):
                 # 别忘了最后加上起始点到第一个点的距离
                 if i == 0:
-                    distance += self.disMatrix[self.start_site - 1, chrom[i] - 1]
-                    time += (self.disMatrix[self.start_site - 1, chrom[i] - 1] / 30) * self.conMatrix[
-                        self.start_site - 1, chrom[i] - 1]
+                    distance += self.disMatrix[self.start_station - 1, chrom[i] - 1]
+                    time += (self.disMatrix[self.start_station - 1, chrom[i] - 1] / 30) * self.conMatrix[
+                        self.start_station - 1, chrom[i] - 1]
                 if i + 1 < length:
                     distance += self.disMatrix[chrom[i] - 1, chrom[i + 1] - 1]
                     time += (self.disMatrix[chrom[i] - 1, chrom[i + 1] - 1] / 30) * self.conMatrix[
                         chrom[i] - 1, chrom[i + 1] - 1]
                 # 最后一个顶点，下一站是起始点
                 elif i == length - 1:
-                    distance += self.disMatrix[chrom[i] - 1, self.start_site - 1]
-                    time += (self.disMatrix[chrom[i] - 1, self.start_site - 1] / 30) * self.conMatrix[
-                        chrom[i] - 1, self.start_site - 1]
+                    distance += self.disMatrix[chrom[i] - 1, self.start_station - 1]
+                    time += (self.disMatrix[chrom[i] - 1, self.start_station - 1] / 30) * self.conMatrix[
+                        chrom[i] - 1, self.start_station - 1]
         return distance,time
 
     def get_cars_distance_and_time2(self, chrom):  #新增方法
@@ -581,12 +580,12 @@ class GA:
             for i in range(length):
                 # 别忘了最后加上起始点到第一个点的距离
                 if i == 0:
-                    distance += self.disMatrix[self.start_site - 1, chrom[i] - 1]
+                    distance += self.disMatrix[self.start_station - 1, chrom[i] - 1]
                 if i + 1 < length:
                     distance += self.disMatrix[chrom[i] - 1, chrom[i + 1] - 1]
                 # 最后一个顶点，下一站是起始点
                 elif i == length - 1:
-                    distance += self.disMatrix[chrom[i] - 1, self.start_site - 1]
+                    distance += self.disMatrix[chrom[i] - 1, self.start_station - 1]
             time+=self.new_time
             for i in range(self.start_index,length):
 
@@ -594,8 +593,8 @@ class GA:
                     time += (self.disMatrix[chrom[i-1] - 1, chrom[i] - 1] / 30) * self.conMatrix[
                         chrom[i-1] - 1, chrom[i] - 1]
                 elif i== length :
-                    time += (self.disMatrix[chrom[i-1] - 1, self.start_site - 1] / 30) * self.conMatrix[
-                        chrom[i] - 1, self.start_site - 1]
+                    time += (self.disMatrix[chrom[i-1] - 1, self.start_station - 1] / 30) * self.conMatrix[
+                        chrom[i] - 1, self.start_station - 1]
         return distance,time
 
     def obj_function(self, chrom,choice): #返回的值obj越小表示个体越好
@@ -618,15 +617,15 @@ class GA:
             for i in range(len(chrom)):
                 # 别忘了最后加上起始点到第一个点的距离
                 if i == 0:
-                    distance += self.disMatrix[self.start_site - 1, chrom[i] - 1]
-                    time+=(self.disMatrix[self.start_site - 1, chrom[i] - 1]/30) * self.conMatrix[self.start_site - 1, chrom[i] - 1]
+                    distance += self.disMatrix[self.start_station - 1, chrom[i] - 1]
+                    time+=(self.disMatrix[self.start_station - 1, chrom[i] - 1]/30) * self.conMatrix[self.start_station - 1, chrom[i] - 1]
                 if i + 1 < len(chrom):
                     distance += self.disMatrix[chrom[i] - 1, chrom[i + 1] - 1]
                     time+=(self.disMatrix[chrom[i] - 1, chrom[i + 1] - 1]/30)*self.conMatrix[chrom[i] - 1, chrom[i + 1] - 1]
                 # 最后一个顶点，下一站是起始点
                 elif i == len(chrom) - 1:
-                    distance += self.disMatrix[chrom[i] - 1, self.start_site - 1]
-                    time+=(self.disMatrix[chrom[i] - 1, self.start_site - 1]/30) * self.conMatrix[chrom[i] - 1, self.start_site - 1]
+                    distance += self.disMatrix[chrom[i] - 1, self.start_station - 1]
+                    time+=(self.disMatrix[chrom[i] - 1, self.start_station - 1]/30) * self.conMatrix[chrom[i] - 1, self.start_station - 1]
             obj2=self.distance_weight * distance + time * self.time_weight
             return obj2
         elif(choice==3):
@@ -635,18 +634,18 @@ class GA:
             time +=self.new_time
             for i in range(len(chrom)):
                 if i==0:
-                    distance += self.disMatrix[self.start_site - 1, chrom[i] - 1]
+                    distance += self.disMatrix[self.start_station - 1, chrom[i] - 1]
                 if i+1 <len(chrom):
                     distance += self.disMatrix[chrom[i] - 1, chrom[i + 1] - 1]
                 elif i== len(chrom) -1:
-                    distance += self.disMatrix[chrom[i] - 1, self.start_site - 1]
+                    distance += self.disMatrix[chrom[i] - 1, self.start_station - 1]
             for i in range(self.start_index,len(chrom)):
                 if i + 1 < len(chrom):
                     time+=(self.disMatrix[chrom[i-1]-1,chrom[i]-1]/30)* self.conMatrix[
                         chrom[i-1] - 1, chrom[i] - 1]
                 elif i == len(chrom) :
-                    time += (self.disMatrix[chrom[i - 1] - 1, self.start_site - 1] / 30) * self.conMatrix[
-                        chrom[i - 1] - 1, self.start_site - 1]
+                    time += (self.disMatrix[chrom[i - 1] - 1, self.start_station - 1] / 30) * self.conMatrix[
+                        chrom[i - 1] - 1, self.start_station - 1]
             obj3 = self.distance_weight * distance + time * self.time_weight
             return obj3
 
@@ -659,7 +658,7 @@ class GA:
         针对实验 2：运送快递
         GA流程
         """
-        self.express_sites_init_pop()  # 初始化种群
+        self.express_stations_init_pop()  # 初始化种群
         self.ga_process_iterator(self.get_cars_distance)  # 调用GA算法的迭代过程
 
 
@@ -694,8 +693,8 @@ class GA:
             self.per_gen_best_chrom, best_index = self.get_best_chrom(pop_new,1)
             # 每代最优个体的适应度
             self.per_gen_best_chrom_fit = pop_fitness_list[best_index]
-            # 每代最优个体最好的路径组成和每条路路径长度per_gen_best_dist_list以及每条路径途经的站点数self.per_gen_passing_sites
-            self.per_gen_best_path, self.per_gen_best_dist_list, self.per_gen_passing_sites = get_distance_func(
+            # 每代最优个体最好的路径组成和每条路路径长度per_gen_best_dist_list以及每条路径途经的站点数self.per_gen_passing_stations
+            self.per_gen_best_path, self.per_gen_best_dist_list, self.per_gen_passing_stations = get_distance_func(
                 self.per_gen_best_chrom)
             # 每代最优个体所有快递车路线之和
             self.per_gen_best_dis_sum = sum(self.per_gen_best_dist_list)
@@ -712,7 +711,7 @@ class GA:
                 self.best_chrom = self.per_gen_best_chrom
                 self.best_chrom_fit = self.per_gen_best_chrom_fit
                 # 全局最优个体最好的路径组成和每条路路径长度
-                self.best_path, self.best_dist_list, self.best_passing_sites = get_distance_func(self.best_chrom)
+                self.best_path, self.best_dist_list, self.best_passing_stations = get_distance_func(self.best_chrom)
                 # self.best_path = self.per_gen_best_path
                 # 全局最优个体的路径之和
                 self.best_dis_sum = self.per_gen_best_dis_sum
@@ -800,10 +799,10 @@ class GA:
                 # 输出
                 if iteration_count % 50 == 0:
                     print("route %d is iterated %d times" % (i + 1, iteration_count))
-                    print("The driving distance of DDV:%f，The total travel time of DDV：%f" % (best_distance, best_time))
+                    print("The driving distance of EDV:%f，The total travel time of EDV：%f" % (best_distance, best_time))
                     print("The global optimal solution route is{}".format(best_chrom))
                     print("---------------------------------------------------------")
-                    print("The driving distance of DDV：%f，The total travel time of DDV：%f" % (
+                    print("The driving distance of EDV：%f，The total travel time of EDV：%f" % (
                     per_gen_best_distance, per_gen_best_time))
                     print("The optimal solution route of each generation is{}".format(per_gen_best_chrom))
                     print("**************************************************************************")
@@ -844,31 +843,31 @@ class GA:
             for k in range(len(chrom)+1):  # 第i个快递车途径的站点数
                 self.start_index=k
                 if(k==0):
-                    print("The %d ES on the %d DDV route is %d" %(k+1, i+1, chrom[k]))
-                    self.new_time += (self.disMatrix[self.start_site - 1, chrom[k] - 1] / 30) * self.conMatrix[
-                        self.start_site - 1, chrom[k] - 1]
-                    self.old_time +=(self.disMatrix[self.start_site - 1, old_chrom[k] - 1] / 30) * self.conMatrix[
-                        self.start_site - 1, old_chrom[k] - 1]
+                    print("The %d ES on the %d EDV route is %d" %(k+1, i+1, chrom[k]))
+                    self.new_time += (self.disMatrix[self.start_station - 1, chrom[k] - 1] / 30) * self.conMatrix[
+                        self.start_station - 1, chrom[k] - 1]
+                    self.old_time +=(self.disMatrix[self.start_station - 1, old_chrom[k] - 1] / 30) * self.conMatrix[
+                        self.start_station - 1, old_chrom[k] - 1]
                     continue
                 self.conMatrix=np.random.uniform(1,5,size=(1001,1001))
                 if (k + 1 < len(chrom) and self.conMatrix[chrom[k-1] - 1, chrom[k] - 1] <= 3):
-                    print("The %d ES on the %d DDV route is %d" % (k + 1, i + 1, chrom[k]))
+                    print("The %d ES on the %d EDV route is %d" % (k + 1, i + 1, chrom[k]))
                     self.new_time+=(self.disMatrix[chrom[k-1]-1,chrom[k]-1]/30)*self.conMatrix[chrom[k-1]-1,chrom[k]-1]
                     self.old_time+=(self.disMatrix[old_chrom[k-1]-1,old_chrom[k]-1]/30)*self.conMatrix[old_chrom[k-1]-1,old_chrom[k]-1]
                     continue
                 if (k+1==len(chrom)):
-                    print("The %d ES on the %d DDV route is %d" % (k + 1, i + 1, chrom[k]))
+                    print("The %d ES on the %d EDV route is %d" % (k + 1, i + 1, chrom[k]))
                     self.new_time += (self.disMatrix[chrom[k-1] - 1, chrom[k]-1] / 30) * self.conMatrix[
                         chrom[k-1] - 1, chrom[k] - 1]
                     self.old_time +=(self.disMatrix[old_chrom[k-1] - 1, old_chrom[k]-1] / 30) * self.conMatrix[
                         old_chrom[k-1] - 1, old_chrom[k] - 1]
                     continue
                 if(k==len(chrom)):
-                    print("The %d DDV completes delivery and heads to the sorting center：" % (i + 1))
-                    self.new_time += (self.disMatrix[chrom[k-1] - 1, self.start_site-1] / 30) * self.conMatrix[
-                        chrom[k-1] - 1, self.start_site - 1]
-                    self.old_time +=(self.disMatrix[old_chrom[k-1] - 1, self.start_site-1] / 30) * self.conMatrix[
-                        old_chrom[k-1] - 1, self.start_site - 1]
+                    print("The %d EDV completes delivery and heads to the sorting center：" % (i + 1))
+                    self.new_time += (self.disMatrix[chrom[k-1] - 1, self.start_station-1] / 30) * self.conMatrix[
+                        chrom[k-1] - 1, self.start_station - 1]
+                    self.old_time +=(self.disMatrix[old_chrom[k-1] - 1, self.start_station-1] / 30) * self.conMatrix[
+                        old_chrom[k-1] - 1, self.start_station - 1]
                     continue
                 print("The road ahead is congested and the route planning is being replanned")
 
@@ -919,8 +918,8 @@ class GA:
                     iteration_count += 1
                 chrom=best_chrom
                 # 输出
-                print("Finish route planning for %d DDV" % (i + 1), end='')
-                print("The %d ES on the %d DDV route is %d" % (k + 1, i + 1, chrom[k]))
+                print("Finish route planning for %d EDV, " % (i + 1), end='')
+                print("the %d ES on the %d EDV route is %d" % (k + 1, i + 1, chrom[k]))
                 self.new_time += (self.disMatrix[chrom[k-1] - 1, chrom[k] - 1] / 30) * self.conMatrix[
                     chrom[k-1] - 1, chrom[k] - 1]
                 self.old_time +=(self.disMatrix[old_chrom[k-1] - 1, old_chrom[k] - 1] / 30) * self.conMatrix[
@@ -930,7 +929,7 @@ class GA:
             new_time_list.append(self.new_time)
             old_time_list.append(self.old_time)
             print("---------------------------------")
-            print("The final route of %d DDV" % (i + 1), end='')
+            print("The final route of %d EDV" % (i + 1), end='')
             print(best_chrom)
             print("new route%f old route%f" % (route_list[i], self.old_route_list[i]))
             print("---------------------------------")
@@ -948,16 +947,16 @@ class GA:
 
     def print_iteration(self):
         print("After %d iterations" % self.iteration_count)
-        print("The total distance traveled by all DDV:%f,The maximum distance traveled by DDV:%f" % (
+        print("The total distance traveled by all EDV:%f,The maximum distance traveled by EDV:%f" % (
         self.best_dis_sum, max(self.best_dist_list)))
         print("The global optimal solution route is{}".format(self.best_path))
-        print("Number of passing sites{}".format(self.best_passing_sites))
+        print("Number of passing stations{}".format(self.best_passing_stations))
         print("Global optimal solution route length list{}".format(self.best_dist_list))
         print("---------------------------------------------------------")
-        print("The optimal solution distance of each generation：%f,The maximum distance traveled by DDV%f" % (
+        print("The optimal solution distance of each generation：%f,The maximum distance traveled by EDV%f" % (
         self.per_gen_best_dis_sum, max(self.per_gen_best_dist_list)))
         print("The optimal solution route of each generation{}".format(self.per_gen_best_path))
-        print("Number of passing sites{}".format(self.per_gen_passing_sites))
+        print("Number of passing stations{}".format(self.per_gen_passing_stations))
         print("Each generation optimal solution route length list{}".format(self.per_gen_best_dist_list))
         print("**************************************************************************")
 
@@ -967,29 +966,45 @@ class GA:
         Returns:
         """
         print(type(self.best_path))
-        print("DDVs' all route length：{}".format(self.best_dis_sum))
-        #best_path, best_dist_list, passing_sites_count = self.get_cars_distance(self.best_chrom)
+        print("EDVs' all route length：{}".format(self.best_dis_sum))
+        #best_path, best_dist_list, passing_stations_count = self.get_cars_distance(self.best_chrom)
         # 打印全局最优个体的所有路线快递站点（包括起点和终点）
         for i in range(len(self.best_path)):
-            print("The route length of {} DDV is {}".format(i + 1, self.best_dist_list[i]))
-            print("The route of {} DDV：".format(i + 1), end="")
+            print("The route length of {} EDV is {}".format(i + 1, self.best_dist_list[i]))
+            print("The route of {} EDV：".format(i + 1), end="")
             if len(self.best_path[i]) == 0:
-                print("The DDV does not leave")  # 这种情况可以通过设置目标函数避免
+                print("The EDV does not leave")  # 这种情况可以通过设置目标函数避免
             else:
                 for j in range(len(self.best_path[i])):
                     if j == 0:
-                        print("{} ——> {} ".format(int(self.express_sites[self.start_site - 1][0]),
-                                                  int(self.express_sites[self.best_path[i][j] - 1][0])), end="")
+                        print("{} ——> {} ".format(int(self.express_stations[self.start_station - 1][0]),
+                                                  int(self.express_stations[self.best_path[i][j] - 1][0])), end="")
                     if j + 1 < len(self.best_path[i]):
-                        print("——> {} ".format(int(self.express_sites[self.best_path[i][j + 1] - 1][0])), end="")
+                        print("——> {} ".format(int(self.express_stations[self.best_path[i][j + 1] - 1][0])), end="")
                     elif j == len(self.best_path[i]) - 1:
-                        print("——> {}".format(int(self.express_sites[self.start_site - 1][0])))
+                        print("——> {}".format(int(self.express_stations[self.start_station - 1][0])))
 
 if __name__ == "__main__":
     # 快递
     start = time.time()
-    ga_obj = GA(car_num=5, express_site_num=1001, start_site=1001,max_iteration_num1=1500, max_iteration_num2=8000,
+    ga_obj = GA(car_num=5, express_station_num=1001, start_station=1001,max_iteration_num1=1500, max_iteration_num2=5000,
                 distance_weight=1,diff_weight=1500,time_weight=250)
     ga_obj.ga_process()
     end = time.time()
     print("Time consuming:", end - start)
+
+#----improved GA  ---stage1
+#After 1 iterationsThe total distance traveled by all EDV:9802.328683,The maximum distance traveled by EDV:2232.491561
+#After 56 iterationsThe total distance traveled by all EDV:9829.953458,The maximum distance traveled by EDV:2388.596524
+#After 126 iterations The total distance traveled by all EDV:9647.795817,The maximum distance traveled by EDV:2396.398119
+#After 1 iterationsThe total distance traveled by all EDV:9970.031394,The maximum distance traveled by EDV:2269.697581
+#After 47 iterations The total distance traveled by all EDV:9888.602082,The maximum distance traveled by EDV:2395.940352
+#After 19 iterations The total distance traveled by all EDV:9855.402790,The maximum distance traveled by EDV:2329.342422
+#After 239 iterations The total distance traveled by all EDV:9446.657905,The maximum distance traveled by EDV:2259.196608
+#After 62 iterations The total distance traveled by all EDV:9716.706848,The maximum distance traveled by EDV:2325.286639
+#After 50 iterations The total distance traveled by all EDV:9836.109673,The maximum distance traveled by EDV:2331.709944
+#After 164 iterations The total distance traveled by all EDV:9412.978995,The maximum distance traveled by EDV:2169.542320
+
+
+
+
